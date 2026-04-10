@@ -111,10 +111,8 @@ html, body, [class*="css"] {
     background: rgba(255,255,255,0.09) !important;
 }
 .login-card label { color: rgba(200,216,238,0.7) !important; font-size: 0.82rem !important; font-weight: 500 !important; }
-/* Login submit button — key fix */
-[data-testid="stForm"] button[kind="primaryFormSubmit"],
-[data-testid="stForm"] button[kind="secondaryFormSubmit"],
-[data-testid="stForm"] button {
+/* Login submit button — scoped to primaryFormSubmit only, never catches eye icon */
+[data-testid="stForm"] button[kind="primaryFormSubmit"] {
     background: linear-gradient(135deg, #1565C0, #1E88E5) !important;
     color: #FFFFFF !important; border: none !important;
     border-radius: 10px !important; height: 48px !important;
@@ -124,13 +122,13 @@ html, body, [class*="css"] {
     transition: all 0.18s ease !important;
     width: 100% !important;
 }
-[data-testid="stForm"] button:hover {
+[data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
     background: linear-gradient(135deg, #1976D2, #42A5F5) !important;
     box-shadow: 0 6px 24px rgba(21,101,192,0.6) !important;
     transform: translateY(-1px) !important;
     color: #FFFFFF !important;
 }
-[data-testid="stForm"] button:active {
+[data-testid="stForm"] button[kind="primaryFormSubmit"]:active {
     transform: translateY(0px) !important;
     box-shadow: 0 2px 8px rgba(21,101,192,0.4) !important;
 }
@@ -320,48 +318,78 @@ def check_password() -> bool:
         return True
 
     # ── Login screen ──────────────────────────────────────────────────────
-    # Full-page dark gradient background
     st.markdown("""
     <style>
+    /* Login-only overrides */
     [data-testid="stAppViewContainer"] {
         background: linear-gradient(135deg, #0A1628 0%, #0F2044 45%, #0D3060 100%) !important;
-        min-height: 100vh;
     }
-    [data-testid="stSidebar"] { display: none !important; }
+    [data-testid="stSidebar"]        { display: none !important; }
+    [data-testid="stHeader"]         { display: none !important; }
+    [data-testid="block-container"]  { padding-top: 5vh !important; }
+
+    /* ── Password eye-icon: reset to small icon only ── */
+    [data-testid="stTextInput"] button,
+    [data-testid="stTextInput"] button:hover,
+    [data-testid="stTextInput"] button:focus {
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        width: 36px !important;
+        min-width: 36px !important;
+        height: 36px !important;
+        padding: 6px !important;
+        color: rgba(200,216,238,0.5) !important;
+        transform: none !important;
+    }
+
+    /* ── Login submit button only ── */
+    [data-testid="stForm"] button[kind="primaryFormSubmit"] {
+        background: linear-gradient(135deg, #1565C0, #1E88E5) !important;
+        color: #FFFFFF !important;
+        border: none !important;
+        border-radius: 10px !important;
+        height: 48px !important;
+        width: 100% !important;
+        font-size: 0.96rem !important;
+        font-weight: 600 !important;
+        box-shadow: 0 4px 16px rgba(21,101,192,0.45) !important;
+        transition: all 0.18s ease !important;
+        letter-spacing: 0.3px !important;
+    }
+    [data-testid="stForm"] button[kind="primaryFormSubmit"]:hover {
+        background: linear-gradient(135deg, #1976D2, #42A5F5) !important;
+        box-shadow: 0 6px 24px rgba(21,101,192,0.65) !important;
+        transform: translateY(-1px) !important;
+        color: #FFFFFF !important;
+    }
     </style>
-    <div style="display:flex; justify-content:center; align-items:flex-start;
-                padding-top: 80px; min-height: 80vh;">
-        <div style="width:100%; max-width:400px; margin:0 auto;">
-            <div style="text-align:center; margin-bottom:32px;">
-                <div style="font-size:3.2rem; margin-bottom:12px;
-                            filter:drop-shadow(0 4px 20px rgba(74,159,212,0.6));">🚀</div>
-                <div style="font-size:2rem; font-weight:700; margin:0 0 6px;
-                            background:linear-gradient(135deg,#FFFFFF,#90C8E8);
-                            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-                            background-clip:text;">CV Pilot</div>
-                <div style="font-size:0.88rem; color:rgba(200,216,238,0.55);
-                            letter-spacing:0.3px;">Sashi Kiran's AI CV Engine</div>
-            </div>
-        </div>
-    </div>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns([1, 1.4, 1])
-    with col2:
+    # Center column: logo + form together (no gap)
+    _, col, _ = st.columns([1, 1.1, 1])
+    with col:
+        # Logo + title
         st.markdown("""
-        <div style="background:rgba(255,255,255,0.05); backdrop-filter:blur(20px);
-                    border:1px solid rgba(255,255,255,0.1); border-radius:18px;
-                    padding:36px 32px 28px; margin-top:-60px;
-                    box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+        <div style="text-align:center; padding:32px 0 28px;">
+            <div style="font-size:3rem; margin-bottom:14px;
+                        filter:drop-shadow(0 4px 20px rgba(74,159,212,0.6));">🚀</div>
+            <div style="font-size:1.95rem; font-weight:700; letter-spacing:-0.3px;
+                        background:linear-gradient(135deg,#FFFFFF 30%,#90C8E8 100%);
+                        -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+                        background-clip:text; margin-bottom:6px;">CV Pilot</div>
+            <div style="font-size:0.85rem; color:rgba(200,216,238,0.5);
+                        letter-spacing:0.3px;">Sashi Kiran's AI CV Engine</div>
         </div>
         """, unsafe_allow_html=True)
 
+        # Form card
         with st.form("login_form"):
-            st.markdown('<p style="color:rgba(200,216,238,0.65); font-size:0.8rem; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; margin-bottom:2px;">Password</p>', unsafe_allow_html=True)
-            password = st.text_input("Password", type="password",
-                                     placeholder="Enter team password",
-                                     label_visibility="collapsed")
-            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+            password = st.text_input(
+                "Password",
+                type="password",
+                placeholder="Enter team password",
+            )
             submitted = st.form_submit_button("🔐  Sign In", use_container_width=True)
 
         if submitted:
@@ -372,10 +400,9 @@ def check_password() -> bool:
                 st.error("Incorrect password. Please try again.")
 
         st.markdown("""
-        <div style="text-align:center; margin-top:20px;">
-            <span style="font-size:0.75rem; color:rgba(200,216,238,0.3);">
-                Secure • Private • AI-Powered
-            </span>
+        <div style="text-align:center; margin-top:16px;">
+            <span style="font-size:0.72rem; color:rgba(200,216,238,0.25);
+                         letter-spacing:0.5px;">Secure · Private · AI-Powered</span>
         </div>
         """, unsafe_allow_html=True)
     return False
