@@ -20,64 +20,280 @@ st.set_page_config(
 # ── Custom CSS ─────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-/* ── Global ── */
-[data-testid="stAppViewContainer"] { background: #F7F9FC; }
-[data-testid="stSidebar"] { background: #1B2A4A; }
-[data-testid="stSidebar"] * { color: #E8EDF5 !important; }
-[data-testid="stSidebar"] .stButton button {
-    background: #2E5090; border: none; color: white;
-    border-radius: 8px; width: 100%;
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ══════════════════════════════════════════════
+   GLOBAL
+══════════════════════════════════════════════ */
+html, body, [class*="css"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+[data-testid="stAppViewContainer"] {
+    background: #F0F4F8;
+}
+[data-testid="stHeader"] { background: transparent; }
+[data-testid="stToolbar"] { display: none; }
+
+/* ══════════════════════════════════════════════
+   SIDEBAR
+══════════════════════════════════════════════ */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0F1E36 0%, #1A2F4E 100%);
+    border-right: 1px solid rgba(255,255,255,0.06);
+}
+[data-testid="stSidebar"] * { color: #C8D8EE !important; }
+[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.1) !important; }
+[data-testid="stSidebar"] .stTextInput input {
+    background: rgba(255,255,255,0.07) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 8px !important; color: #E8EDF5 !important;
+}
+[data-testid="stSidebar"] .stTextInput input::placeholder { color: rgba(200,216,238,0.45) !important; }
+[data-testid="stSidebar"] .stTextInput input:focus {
+    border-color: #4A9FD4 !important;
+    box-shadow: 0 0 0 2px rgba(74,159,212,0.2) !important;
+}
+/* Sidebar refresh button */
+[data-testid="stSidebar"] [data-testid="stButton"] button {
+    background: rgba(46,134,193,0.2) !important;
+    border: 1px solid rgba(46,134,193,0.4) !important;
+    color: #7EB3E8 !important; border-radius: 8px !important;
+    font-size: 0.82rem !important; font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+}
+[data-testid="stSidebar"] [data-testid="stButton"] button:hover {
+    background: rgba(46,134,193,0.35) !important;
+    border-color: rgba(46,134,193,0.6) !important;
+    color: #A8D0F0 !important;
 }
 
-/* ── Cards ── */
+/* ══════════════════════════════════════════════
+   LOGIN PAGE
+══════════════════════════════════════════════ */
+.login-page-bg {
+    position: fixed; inset: 0; z-index: 0;
+    background: linear-gradient(135deg, #0A1628 0%, #0F2044 40%, #0D3060 100%);
+}
+.login-card {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 44px 40px 36px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05);
+}
+.login-logo {
+    font-size: 3rem; margin-bottom: 8px;
+    filter: drop-shadow(0 4px 16px rgba(74,159,212,0.5));
+}
+.login-title {
+    font-size: 1.9rem; font-weight: 700; margin: 0 0 4px;
+    background: linear-gradient(135deg, #FFFFFF, #90C8E8);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.login-subtitle {
+    font-size: 0.88rem; color: rgba(200,216,238,0.6); margin: 0 0 32px;
+}
+/* Login input */
+.login-card .stTextInput input {
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    border-radius: 10px !important; color: #E8EDF5 !important;
+    font-size: 0.95rem !important; padding: 12px 16px !important;
+    height: 48px !important; transition: all 0.2s ease !important;
+}
+.login-card .stTextInput input::placeholder { color: rgba(200,216,238,0.35) !important; }
+.login-card .stTextInput input:focus {
+    border-color: #4A9FD4 !important;
+    box-shadow: 0 0 0 3px rgba(74,159,212,0.18) !important;
+    background: rgba(255,255,255,0.09) !important;
+}
+.login-card label { color: rgba(200,216,238,0.7) !important; font-size: 0.82rem !important; font-weight: 500 !important; }
+/* Login submit button — key fix */
+[data-testid="stForm"] button[kind="primaryFormSubmit"],
+[data-testid="stForm"] button[kind="secondaryFormSubmit"],
+[data-testid="stForm"] button {
+    background: linear-gradient(135deg, #1565C0, #1E88E5) !important;
+    color: #FFFFFF !important; border: none !important;
+    border-radius: 10px !important; height: 48px !important;
+    font-size: 0.96rem !important; font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    box-shadow: 0 4px 16px rgba(21,101,192,0.45) !important;
+    transition: all 0.18s ease !important;
+    width: 100% !important;
+}
+[data-testid="stForm"] button:hover {
+    background: linear-gradient(135deg, #1976D2, #42A5F5) !important;
+    box-shadow: 0 6px 24px rgba(21,101,192,0.6) !important;
+    transform: translateY(-1px) !important;
+    color: #FFFFFF !important;
+}
+[data-testid="stForm"] button:active {
+    transform: translateY(0px) !important;
+    box-shadow: 0 2px 8px rgba(21,101,192,0.4) !important;
+}
+
+/* ══════════════════════════════════════════════
+   MAIN APP INPUTS
+══════════════════════════════════════════════ */
+.stTextArea textarea {
+    border-radius: 10px !important;
+    border: 1.5px solid #CBD5E1 !important;
+    font-size: 0.93rem !important;
+    background: #FFFFFF !important;
+    color: #1E293B !important;
+    transition: border-color 0.2s ease !important;
+    line-height: 1.6 !important;
+}
+.stTextArea textarea:focus {
+    border-color: #3B82F6 !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1) !important;
+}
+.stTextInput input {
+    border-radius: 9px !important;
+    border: 1.5px solid #CBD5E1 !important;
+    font-size: 0.92rem !important; color: #1E293B !important;
+    transition: border-color 0.2s ease !important;
+}
+.stTextInput input:focus {
+    border-color: #3B82F6 !important;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1) !important;
+}
+.stSelectbox > div > div {
+    border-radius: 9px !important; border: 1.5px solid #CBD5E1 !important;
+}
+
+/* ══════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════ */
+/* Primary — Generate CV */
+[data-testid="stButton"] button[kind="primary"] {
+    background: linear-gradient(135deg, #1565C0 0%, #1E88E5 100%) !important;
+    color: #FFFFFF !important; border: none !important;
+    border-radius: 12px !important;
+    padding: 14px 36px !important; font-size: 1.05rem !important;
+    font-weight: 600 !important; letter-spacing: 0.2px !important;
+    box-shadow: 0 4px 18px rgba(21,101,192,0.4) !important;
+    transition: all 0.18s ease !important;
+}
+[data-testid="stButton"] button[kind="primary"]:hover {
+    background: linear-gradient(135deg, #1976D2 0%, #42A5F5 100%) !important;
+    box-shadow: 0 8px 28px rgba(21,101,192,0.55) !important;
+    transform: translateY(-2px) !important;
+    color: #FFFFFF !important;
+}
+[data-testid="stButton"] button[kind="primary"]:active {
+    transform: translateY(0px) !important;
+}
+/* Secondary */
+[data-testid="stButton"] button[kind="secondary"] {
+    background: #FFFFFF !important; color: #1E40AF !important;
+    border: 1.5px solid #BFDBFE !important; border-radius: 9px !important;
+    font-weight: 500 !important; transition: all 0.18s ease !important;
+}
+[data-testid="stButton"] button[kind="secondary"]:hover {
+    background: #EFF6FF !important; border-color: #93C5FD !important;
+}
+/* Download button */
+[data-testid="stDownloadButton"] button {
+    background: linear-gradient(135deg, #065F46, #059669) !important;
+    color: white !important; border: none !important;
+    border-radius: 12px !important; padding: 13px 28px !important;
+    font-size: 1rem !important; font-weight: 600 !important;
+    box-shadow: 0 4px 14px rgba(5,150,105,0.35) !important;
+    transition: all 0.18s ease !important;
+}
+[data-testid="stDownloadButton"] button:hover {
+    background: linear-gradient(135deg, #047857, #10B981) !important;
+    box-shadow: 0 6px 20px rgba(5,150,105,0.5) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ══════════════════════════════════════════════
+   TABS
+══════════════════════════════════════════════ */
+[data-testid="stTabs"] [role="tablist"] {
+    gap: 4px; border-bottom: 2px solid #E2E8F0;
+}
+[data-testid="stTabs"] button[role="tab"] {
+    font-size: 0.85rem !important; font-weight: 500 !important;
+    color: #64748B !important; padding: 8px 16px !important;
+    border-radius: 6px 6px 0 0 !important;
+    transition: all 0.15s ease !important;
+}
+[data-testid="stTabs"] button[role="tab"]:hover { color: #1E40AF !important; background: #F1F5F9 !important; }
+[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+    color: #1E40AF !important; font-weight: 600 !important;
+    border-bottom: 2px solid #1E40AF !important;
+    background: transparent !important;
+}
+
+/* ══════════════════════════════════════════════
+   CARDS & CONTAINERS
+══════════════════════════════════════════════ */
 .cv-card {
-    background: white; border-radius: 14px;
-    padding: 24px 28px; margin-bottom: 20px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
-    border-left: 4px solid #2E86C1;
+    background: #FFFFFF; border-radius: 14px;
+    padding: 26px 30px; margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.05);
+    border: 1px solid #E8EFF5;
 }
-.cv-card h3 { color: #1B4F72; margin-top: 0; font-size: 1.1rem; }
+.cv-card h3 { color: #1E3A5F; margin-top: 0; font-size: 1.05rem; font-weight: 600; }
 
-/* ── Score badge ── */
-.score-high { background:#D5F5E3; color:#1E8449; padding:4px 12px;
-              border-radius:20px; font-weight:700; font-size:0.95rem; }
-.score-mid  { background:#FDEBD0; color:#B7770D; padding:4px 12px;
-              border-radius:20px; font-weight:700; font-size:0.95rem; }
-.score-low  { background:#FADBD8; color:#922B21; padding:4px 12px;
-              border-radius:20px; font-weight:700; font-size:0.95rem; }
+/* ══════════════════════════════════════════════
+   SCORE BADGES
+══════════════════════════════════════════════ */
+.score-high { background:#DCFCE7; color:#15803D; padding:4px 14px;
+              border-radius:20px; font-weight:700; font-size:0.88rem;
+              border: 1px solid #BBF7D0; }
+.score-mid  { background:#FEF9C3; color:#92400E; padding:4px 14px;
+              border-radius:20px; font-weight:700; font-size:0.88rem;
+              border: 1px solid #FDE68A; }
+.score-low  { background:#FEE2E2; color:#B91C1C; padding:4px 14px;
+              border-radius:20px; font-weight:700; font-size:0.88rem;
+              border: 1px solid #FECACA; }
 
-/* ── Tags ── */
-.tag { background:#EBF5FB; color:#2E86C1; padding:3px 10px;
-       border-radius:12px; font-size:0.78rem; margin:2px;
-       display:inline-block; }
+/* ══════════════════════════════════════════════
+   TAGS
+══════════════════════════════════════════════ */
+.tag { background:#EFF6FF; color:#1D4ED8; padding:3px 11px;
+       border-radius:20px; font-size:0.75rem; margin:2px 3px 2px 0;
+       display:inline-block; font-weight:500; border: 1px solid #BFDBFE; }
 
-/* ── Generate button ── */
-div[data-testid="stButton"] > button[kind="primary"] {
-    background: linear-gradient(135deg, #1B4F72, #2E86C1);
-    color: white; border: none; border-radius: 10px;
-    padding: 14px 36px; font-size: 1.05rem; font-weight: 600;
-    width: 100%; box-shadow: 0 4px 14px rgba(46,134,193,0.35);
-    transition: all 0.2s ease;
+/* ══════════════════════════════════════════════
+   STEP LABELS & DIVIDERS
+══════════════════════════════════════════════ */
+.step-label {
+    font-size: 0.72rem; font-weight: 700; color: #3B82F6;
+    text-transform: uppercase; letter-spacing: 1.5px;
+    margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
 }
-div[data-testid="stButton"] > button[kind="primary"]:hover {
-    box-shadow: 0 6px 20px rgba(46,134,193,0.5); transform: translateY(-1px);
+hr { border: none; border-top: 1px solid #E2E8F0; margin: 20px 0; }
+
+/* ══════════════════════════════════════════════
+   ALERTS / INFO BOXES
+══════════════════════════════════════════════ */
+[data-testid="stAlert"] {
+    border-radius: 10px !important; border-left-width: 4px !important;
+    font-size: 0.88rem !important;
 }
 
-/* ── Download button ── */
-div[data-testid="stDownloadButton"] button {
-    background: #1E8449; color: white; border: none;
-    border-radius: 10px; padding: 12px 28px;
-    font-size: 1rem; font-weight: 600; width: 100%;
+/* ══════════════════════════════════════════════
+   PROGRESS BAR
+══════════════════════════════════════════════ */
+[data-testid="stProgress"] > div > div {
+    background: linear-gradient(90deg, #1565C0, #42A5F5) !important;
+    border-radius: 4px !important;
 }
 
-/* ── Misc ── */
-.stTextArea textarea { border-radius: 10px; border: 1.5px solid #AED6F1;
-                       font-size: 0.92rem; }
-.stTextInput input { border-radius: 8px; }
-.step-label { font-size: 0.78rem; font-weight: 700; color: #2E86C1;
-              text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-.divider { height:1px; background:#E8EDF5; margin: 24px 0; }
-hr { border-color: #E8EDF5; }
+/* ══════════════════════════════════════════════
+   SCROLLBAR
+══════════════════════════════════════════════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -104,21 +320,49 @@ def check_password() -> bool:
         return True
 
     # ── Login screen ──────────────────────────────────────────────────────
+    # Full-page dark gradient background
+    st.markdown("""
+    <style>
+    [data-testid="stAppViewContainer"] {
+        background: linear-gradient(135deg, #0A1628 0%, #0F2044 45%, #0D3060 100%) !important;
+        min-height: 100vh;
+    }
+    [data-testid="stSidebar"] { display: none !important; }
+    </style>
+    <div style="display:flex; justify-content:center; align-items:flex-start;
+                padding-top: 80px; min-height: 80vh;">
+        <div style="width:100%; max-width:400px; margin:0 auto;">
+            <div style="text-align:center; margin-bottom:32px;">
+                <div style="font-size:3.2rem; margin-bottom:12px;
+                            filter:drop-shadow(0 4px 20px rgba(74,159,212,0.6));">🚀</div>
+                <div style="font-size:2rem; font-weight:700; margin:0 0 6px;
+                            background:linear-gradient(135deg,#FFFFFF,#90C8E8);
+                            -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+                            background-clip:text;">CV Pilot</div>
+                <div style="font-size:0.88rem; color:rgba(200,216,238,0.55);
+                            letter-spacing:0.3px;">Sashi Kiran's AI CV Engine</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
     col1, col2, col3 = st.columns([1, 1.4, 1])
     with col2:
-        st.markdown("<br><br>", unsafe_allow_html=True)
         st.markdown("""
-        <div style="text-align:center; margin-bottom:32px;">
-            <div style="font-size:3rem">🚀</div>
-            <h1 style="color:#1B4F72; margin:8px 0 4px;">CV Pilot</h1>
-            <p style="color:#666; margin:0">Sashi Kiran's AI CV Engine</p>
+        <div style="background:rgba(255,255,255,0.05); backdrop-filter:blur(20px);
+                    border:1px solid rgba(255,255,255,0.1); border-radius:18px;
+                    padding:36px 32px 28px; margin-top:-60px;
+                    box-shadow:0 24px 64px rgba(0,0,0,0.5);">
         </div>
         """, unsafe_allow_html=True)
 
         with st.form("login_form"):
+            st.markdown('<p style="color:rgba(200,216,238,0.65); font-size:0.8rem; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; margin-bottom:2px;">Password</p>', unsafe_allow_html=True)
             password = st.text_input("Password", type="password",
-                                     placeholder="Enter team password")
-            submitted = st.form_submit_button("Sign In", use_container_width=True)
+                                     placeholder="Enter team password",
+                                     label_visibility="collapsed")
+            st.markdown("<div style='height:8px'></div>", unsafe_allow_html=True)
+            submitted = st.form_submit_button("🔐  Sign In", use_container_width=True)
 
         if submitted:
             if hashlib.sha256(password.encode()).hexdigest() == correct_hash:
@@ -126,6 +370,14 @@ def check_password() -> bool:
                 st.rerun()
             else:
                 st.error("Incorrect password. Please try again.")
+
+        st.markdown("""
+        <div style="text-align:center; margin-top:20px;">
+            <span style="font-size:0.75rem; color:rgba(200,216,238,0.3);">
+                Secure • Private • AI-Powered
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
     return False
 
 
@@ -139,11 +391,14 @@ def render_sidebar(cv_library: list):
     """Render the left sidebar with library stats and saved CVs."""
     with st.sidebar:
         st.markdown("""
-        <div style="padding:16px 0 8px; text-align:center;">
-            <span style="font-size:1.6rem">🚀</span>
-            <div style="font-size:1.1rem; font-weight:700; margin-top:4px;">CV Pilot</div>
-            <div style="font-size:0.75rem; opacity:0.6; margin-top:2px;">
-                Sashi Kiran's CV Engine
+        <div style="padding:20px 4px 12px; text-align:center;">
+            <div style="font-size:2rem; margin-bottom:6px;
+                        filter:drop-shadow(0 2px 8px rgba(74,159,212,0.5));">🚀</div>
+            <div style="font-size:1.05rem; font-weight:700; color:#E8F4FF;
+                        letter-spacing:0.3px;">CV Pilot</div>
+            <div style="font-size:0.72rem; color:rgba(200,216,238,0.45);
+                        margin-top:2px; letter-spacing:0.2px;">
+                Sashi Kiran's AI CV Engine
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -236,20 +491,22 @@ def render_sidebar(cv_library: list):
                 role  = entry.get("role_type","")[:28]
                 date  = entry.get("created_date","")[:10]
                 st.markdown(f"""
-                <div style="background:#243555; border-radius:8px; padding:10px 12px;
-                            margin-bottom:8px; cursor:pointer;">
-                    <div style="font-size:0.78rem; font-weight:600; margin-bottom:3px;
-                                word-break:break-all;">{name[:36]}</div>
+                <div style="background:rgba(255,255,255,0.05); border-radius:10px;
+                            padding:11px 14px; margin-bottom:7px;
+                            border:1px solid rgba(255,255,255,0.08);
+                            transition:background 0.15s ease;">
+                    <div style="font-size:0.78rem; font-weight:600; margin-bottom:4px;
+                                word-break:break-all; color:#D4E8FA;">{name[:36]}</div>
                     <div style="display:flex; justify-content:space-between;
-                                align-items:center; margin-top:4px;">
-                        <span style="font-size:0.7rem; opacity:0.7;">{role}</span>
-                        <span class="{cls}" style="font-size:0.7rem;">{score}/100</span>
+                                align-items:center;">
+                        <span style="font-size:0.69rem; color:rgba(200,216,238,0.55);">{role}</span>
+                        <span class="{cls}" style="font-size:0.68rem;">{score}/100</span>
                     </div>
-                    <div style="font-size:0.68rem; opacity:0.5; margin-top:2px;">{date}</div>
+                    <div style="font-size:0.66rem; color:rgba(200,216,238,0.3); margin-top:3px;">{date}</div>
                 </div>
                 """, unsafe_allow_html=True)
         else:
-            st.markdown("<div style='opacity:0.5; font-size:0.82rem;'>No CVs found</div>",
+            st.markdown("<div style='color:rgba(200,216,238,0.35); font-size:0.82rem; padding:8px 4px;'>No CVs found</div>",
                         unsafe_allow_html=True)
 
 
@@ -524,20 +781,22 @@ def main():
 
     # ── Page header ───────────────────────────────────────────────────────
     st.markdown("""
-    <div style="padding: 8px 0 24px;">
-        <h1 style="color:#1B4F72; margin:0; font-size:1.8rem;">
-            🚀  CV Pilot
-        </h1>
-        <p style="color:#666; margin:4px 0 0; font-size:0.95rem;">
-            Paste a job description below — Claude will pick the best matching CV,
-            enhance it for this role, and save it to Google Drive automatically.
+    <div style="padding:16px 0 28px; border-bottom:1px solid #E2E8F0; margin-bottom:28px;">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
+            <span style="font-size:1.8rem;">🚀</span>
+            <h1 style="color:#0F2044; margin:0; font-size:1.75rem; font-weight:700;
+                       letter-spacing:-0.3px;">CV Pilot</h1>
+        </div>
+        <p style="color:#64748B; margin:0; font-size:0.92rem; max-width:560px; line-height:1.5;">
+            Paste a job description — Claude picks the best matching CV, enhances it
+            for this role, and saves it to Google Drive automatically.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
     # ── Input card ────────────────────────────────────────────────────────
     with st.container():
-        st.markdown('<div class="step-label">Step 1 — Job Description</div>',
+        st.markdown('<div class="step-label">📋 Step 1 — Job Description</div>',
                     unsafe_allow_html=True)
 
         jd_text = ""
@@ -575,7 +834,7 @@ def main():
                 jd_text = jd_text_from_file
 
         st.markdown("---")
-        st.markdown('<div class="step-label">Step 2 — Optional Details</div>',
+        st.markdown('<div class="step-label">⚙️ Step 2 — Optional Details</div>',
                     unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
