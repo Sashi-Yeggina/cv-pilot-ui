@@ -754,53 +754,45 @@ def show_results(result: dict):
     score_html += '</div></div>'
     st.markdown(score_html, unsafe_allow_html=True)
 
-    # ── Enhancement summary (pure HTML — no st.columns inside HTML divs) ─
+    # ── Enhancement summary ─────────────────────────────────────────────────
+    # Use native Streamlit components (not raw HTML) to avoid rendering bugs
+    import html as html_mod   # for escaping dynamic content
+
     role_title = enh.get('role_title', '—')
     summary    = enh.get('summary', '')
-    summary_short = summary[:250] + ('…' if len(summary) > 250 else '')
     bullets    = enh.get('professional_skills_bullets', [])
     job_b      = enh.get('job_bullets', {})
     total_b    = sum(len(v) for v in job_b.values())
 
-    skills_html = ''.join(
-        f'<div style="font-size:0.82rem; color:#1E293B; padding:3px 0;">• {b}</div>'
-        for b in bullets[:6]
-    )
+    st.markdown("#### ✨  What Was Enhanced")
+    st.caption("Here's exactly what the AI changed in your CV for this role.")
 
-    # Job bullets preview (show first 2 companies)
-    job_preview_html = ''
-    for comp_name, comp_bullets in list(job_b.items())[:2]:
-        job_preview_html += f'<div style="font-size:0.78rem; font-weight:600; color:#1B4F72; margin-top:8px;">{comp_name}</div>'
-        for jb in comp_bullets[:2]:
-            job_preview_html += f'<div style="font-size:0.78rem; color:#475569; padding:2px 0 2px 10px;">• {jb[:120]}{"…" if len(jb)>120 else ""}</div>'
+    # ── Row 1: Role title + Summary ──────────────────────────────────────
+    r1c1, r1c2 = st.columns([1, 2])
+    with r1c1:
+        st.markdown("**🏷️ Updated Role Title**")
+        st.info(role_title)
+    with r1c2:
+        st.markdown("**📝 New Professional Summary**")
+        st.text_area("summary_preview", value=summary, height=100,
+                      disabled=True, label_visibility="collapsed",
+                      key="enh_summary_preview")
 
-    st.markdown(f"""
-    <div class="cv-card">
-        <h3>✨  What Was Enhanced</h3>
-        <div style="display:flex; gap:28px; flex-wrap:wrap;">
-            <div style="flex:1; min-width:260px;">
-                <div style="font-size:0.72rem; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Role Title</div>
-                <div style="font-weight:700; color:#1B4F72; font-size:1rem; margin-bottom:14px;">{role_title}</div>
+    # ── Row 2: Skills + Experience ────────────────────────────────────────
+    r2c1, r2c2 = st.columns(2)
+    with r2c1:
+        st.markdown(f"**🛠️ Skills Section** *({len(bullets)} lines rewritten)*")
+        for b in bullets[:6]:
+            st.markdown(f"- {b}")
 
-                <div style="font-size:0.72rem; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Professional Summary</div>
-                <div style="font-size:0.85rem; color:#334155; line-height:1.55; background:#F8FAFC; border-radius:8px; padding:12px; border-left:3px solid #3B82F6;">
-                    {summary_short}
-                </div>
-            </div>
-            <div style="flex:1; min-width:260px;">
-                <div style="font-size:0.72rem; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">
-                    Skills Updated ({len(bullets)} bullets)
-                </div>
-                {skills_html}
+    with r2c2:
+        st.markdown(f"**💼 Experience Bullets** *({total_b} points across {len(job_b)} roles)*")
+        for comp_name, comp_bullets in list(job_b.items())[:3]:
+            st.markdown(f"**{html_mod.escape(comp_name)}**")
+            for jb in comp_bullets[:3]:
+                st.markdown(f"- {jb}")
 
-                <div style="font-size:0.72rem; color:#888; text-transform:uppercase; letter-spacing:1px; margin-top:14px; margin-bottom:4px;">
-                    Experience Bullets ({total_b} points across {len(job_b)} roles)
-                </div>
-                {job_preview_html}
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("---")
 
 
 # ══════════════════════════════════════════════════════════════════════════
