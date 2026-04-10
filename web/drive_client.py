@@ -319,6 +319,23 @@ class DriveClient:
 
         return best_match if best_score >= threshold else None
 
+    def get_template_cv(self) -> Optional[bytes]:
+        """
+        Download _template.docx from the CV Pilot root folder if it exists.
+
+        Upload a file named '_template.docx' to your 'CV Pilot/' folder in
+        Google Drive to define the design (fonts, layout, section structure)
+        for all generated CVs. If not found, the best-matching base CV is
+        used for formatting instead.
+
+        Returns:
+            bytes of the template DOCX, or None if not uploaded yet.
+        """
+        file_id = self._find_file("_template.docx", self.root_folder_id)
+        if not file_id:
+            return None
+        return self._download_file(file_id)
+
     def get_aligned_cv_bytes(self, filename: str) -> Optional[bytes]:
         """
         Download a specific aligned CV from Drive by filename.

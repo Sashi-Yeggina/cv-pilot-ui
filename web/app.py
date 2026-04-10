@@ -179,10 +179,39 @@ def render_sidebar(cv_library: list):
         if st.button("🔄  Refresh Library", key="refresh_lib"):
             st.cache_data.clear()
             # Clear debug session state
-            for key in ["_debug_base_cvs_count", "_debug_error"]:
+            for key in ["_debug_base_cvs_count", "_debug_error", "_template_active"]:
                 if key in st.session_state:
                     del st.session_state[key]
             st.rerun()
+
+        st.markdown("---")
+
+        # ── Template status ──
+        template_active = st.session_state.get("_template_active", None)
+        if template_active is True:
+            st.markdown("""
+            <div style="background:#1A3D2B; border-radius:8px; padding:10px 14px;
+                        margin-bottom:8px; border-left:3px solid #27AE60;">
+                <div style="font-size:0.75rem; font-weight:700; color:#2ECC71;">
+                    🎨  Design Template Active
+                </div>
+                <div style="font-size:0.68rem; opacity:0.7; margin-top:2px;">
+                    _template.docx found in CV Pilot/
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        elif template_active is False:
+            st.markdown("""
+            <div style="background:#2A2A1A; border-radius:8px; padding:10px 14px;
+                        margin-bottom:8px; border-left:3px solid #E67E22;">
+                <div style="font-size:0.75rem; font-weight:700; color:#E67E22;">
+                    🎨  No Design Template
+                </div>
+                <div style="font-size:0.68rem; opacity:0.7; margin-top:2px;">
+                    Upload _template.docx to CV Pilot/ to set one
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
         st.markdown("---")
 
@@ -278,12 +307,19 @@ def run_pipeline(jd_text: str, company: str) -> dict:
     cv_bytes  = drive.download_cv(best_id)
     best_text = next(c["text"] for c in cv_data_list if c["filename"] == best["filename"])
 
-    # ── 5. Enhance ────────────────────────────────────────────────────────
+    # ── 5. Check for design template ─────────────────────────────────────
+    progress.progress(67, text="🎨  Checking for design template...")
+    template_bytes = drive.get_template_cv()
+    st.session_state["_template_active"] = template_bytes is not None
+    # Use template for output design if available, otherwise use best CV
+    base_for_output = template_bytes if template_bytes else cv_bytes
+
+    # ── 6. Enhance (based on best CV content) ────────────────────────────
     enhancements = enhance_cv(client, best_text, jd)
 
-    # ── 6. Apply to DOCX ──────────────────────────────────────────────────
+    # ── 7. Apply to DOCX ──────────────────────────────────────────────────
     progress.progress(80, text="📝  Writing enhanced CV...")
-    output_bytes = apply_enhancements(cv_bytes, enhancements)
+    output_bytes = apply_enhancements(base_for_output, enhancements)
 
     # ── 7. Build filename & save to Drive ─────────────────────────────────
     progress.progress(90, text="☁️  Saving to Google Drive...")
@@ -500,73 +536,73 @@ def main():
     """, unsafe_allow_html=True)
 
     # ── Input card ────────────────────────────────────────────────────────
-    st.markdown('<div class="cv-card">', unsafe_allow_html=True)
-    st.markdown('<div class="step-label">Step 1 — Job Description</div>',
-                unsafe_allow_html=True)
+    with st.container():
+        st.markdown('<div class="step-label">Step 1 — Job Description</div>',
+                    unsafe_allow_html=True)
 
-    jd_tab, file_tab = st.tabs(["📋  Paste JD", "📁  Upload JD File"])
+        jd_text = ""
+        jd_tab, file_tab = st.tabs(["📋  Paste JD", "📁  Upload JD File"])
 
-    with jd_tab:
-        jd_text = st.text_area(
-            "Job Description",
-            height=260,
-            placeholder="Paste the full job description here…\n\nInclude the role title, requirements, responsibilities, and any skills mentioned.",
-            label_visibility="collapsed",
-        )
+        with jd_tab:
+            jd_text = st.text_area(
+                "Job Description",
+                height=260,
+                placeholder="Paste the full job description here…\n\nInclude the role title, requirements, responsibilities, and any skills mentioned.",
+                label_visibility="collapsed",
+            )
 
-    with file_tab:
-        uploaded = st.file_uploader("Upload a .txt or .pdf JD file",
-                                    type=["txt", "pdf"],
-                                    label_visibility="collapsed")
-        jd_text_from_file = ""
-        if uploaded:
-            if uploaded.type == "text/plain":
-                jd_text_from_file = uploaded.read().decode("utf-8", errors="ignore")
-                st.success(f"Loaded {len(jd_text_from_file)} characters from {uploaded.name}")
-            elif uploaded.type == "application/pdf":
-                try:
-                    import pdfplumber
-                    with pdfplumber.open(io.BytesIO(uploaded.read())) as pdf:
-                        jd_text_from_file = "\n".join(
-                            p.extract_text() or "" for p in pdf.pages
-                        )
-                    st.success(f"Extracted text from {uploaded.name}")
-                except ImportError:
-                    st.warning("PDF reading needs pdfplumber. Paste the JD as text instead.")
+        with file_tab:
+            uploaded = st.file_uploader("Upload a .txt or .pdf JD file",
+                                        type=["txt", "pdf"],
+                                        label_visibility="collapsed")
+            jd_text_from_file = ""
+            if uploaded:
+                if uploaded.type == "text/plain":
+                    jd_text_from_file = uploaded.read().decode("utf-8", errors="ignore")
+                    st.success(f"Loaded {len(jd_text_from_file)} characters from {uploaded.name}")
+                elif uploaded.type == "application/pdf":
+                    try:
+                        import pdfplumber
+                        with pdfplumber.open(io.BytesIO(uploaded.read())) as pdf:
+                            jd_text_from_file = "\n".join(
+                                p.extract_text() or "" for p in pdf.pages
+                            )
+                        st.success(f"Extracted text from {uploaded.name}")
+                    except ImportError:
+                        st.warning("PDF reading needs pdfplumber. Paste the JD as text instead.")
 
-        if jd_text_from_file:
-            jd_text = jd_text_from_file
+            if jd_text_from_file:
+                jd_text = jd_text_from_file
 
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="step-label">Step 2 — Optional Details</div>',
-                unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown('<div class="step-label">Step 2 — Optional Details</div>',
+                    unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
-    with col1:
-        company = st.text_input("Target company name",
-                                placeholder="e.g.  Amazon, Microsoft, Google…",
-                                help="Used in the output filename. Leave blank if not known.")
-    with col2:
-        role_hint = st.selectbox(
-            "Role category hint (optional)",
-            options=["— Auto-detect —", "AWS Cloud Engineer", "Cloud Solutions Architect",
-                     "DevOps Engineer", "SRE", "AIOps Engineer",
-                     "Azure DevOps Engineer", "Cloud Network Engineer", "Platform Engineer"],
-            help="Leave on auto-detect — Claude will identify the role from the JD.",
-        )
+        col1, col2 = st.columns(2)
+        with col1:
+            company = st.text_input("Target company name",
+                                    placeholder="e.g.  Amazon, Microsoft, Google…",
+                                    help="Used in the output filename. Leave blank if not known.")
+        with col2:
+            role_hint = st.selectbox(
+                "Role category hint (optional)",
+                options=["— Auto-detect —", "AWS Cloud Engineer", "Cloud Solutions Architect",
+                         "DevOps Engineer", "SRE", "AIOps Engineer",
+                         "Azure DevOps Engineer", "Cloud Network Engineer", "Platform Engineer"],
+                help="Leave on auto-detect — Claude will identify the role from the JD.",
+            )
 
-    st.markdown('<div class="divider"></div>', unsafe_allow_html=True)
+        st.markdown("---")
 
-    # ── Generate button ───────────────────────────────────────────────────
-    ready = bool(jd_text and len(jd_text.strip()) > 100)
-    if not ready:
-        st.info("👆  Paste a job description above (at least 100 characters) to enable generation.")
+        # ── Generate button ───────────────────────────────────────────────────
+        ready = bool(jd_text and len(jd_text.strip()) > 100)
+        if not ready:
+            st.info("👆  Paste a job description above (at least 100 characters) to enable generation.")
 
-    generate = st.button("⚡  Generate CV",
-                         type="primary",
-                         disabled=not ready,
-                         use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        generate = st.button("⚡  Generate CV",
+                             type="primary",
+                             disabled=not ready,
+                             use_container_width=True)
 
     # ── Run pipeline ──────────────────────────────────────────────────────
     if generate and ready:

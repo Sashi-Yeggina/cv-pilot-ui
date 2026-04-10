@@ -42,7 +42,7 @@ Return ONLY valid JSON with this exact structure:
 }}"""
 
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="claude-haiku-4-5-20251001",
         max_tokens=1500,
         messages=[{"role": "user", "content": prompt}]
     )
@@ -115,7 +115,7 @@ Scoring rubric:
 Return ONLY the JSON array, no other text."""
 
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="claude-haiku-4-5-20251001",
         max_tokens=2000,
         messages=[{"role": "user", "content": prompt}]
     )
@@ -197,7 +197,7 @@ Return ONLY valid JSON with this structure:
 For job_bullets: use the EXACT company names as they appear in the CV. Only include companies where you can genuinely improve the bullets based on the JD. Provide 3-5 bullets per company."""
 
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="claude-haiku-4-5-20251001",
         max_tokens=4000,
         messages=[{"role": "user", "content": prompt}]
     )
