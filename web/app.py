@@ -185,6 +185,14 @@ html, body, [class*="css"] {
 [data-testid="stButton"] button[kind="primary"]:active {
     transform: translateY(0px) !important;
 }
+/* Disabled state — clear visual feedback instead of confusing cursor */
+[data-testid="stButton"] button[kind="primary"]:disabled {
+    background: linear-gradient(135deg, #94A3B8 0%, #B0BEC5 100%) !important;
+    box-shadow: none !important;
+    cursor: not-allowed !important;
+    opacity: 0.7 !important;
+    transform: none !important;
+}
 /* Secondary */
 [data-testid="stButton"] button[kind="secondary"] {
     background: #FFFFFF !important; color: #1E40AF !important;
@@ -617,7 +625,7 @@ def run_pipeline(jd_text: str, company: str) -> dict:
     try:
         drive.save_aligned_cv(fname, output_bytes)
 
-        # ── 8. Update index ───────────────────────────────────────────────────
+        # ── 8. Update index (load existing → append → save) ──────────────────
         import uuid
         index_entry = {
             "id": str(uuid.uuid4()),
@@ -637,7 +645,12 @@ def run_pipeline(jd_text: str, company: str) -> dict:
                 + [jd["role_category"].lower().replace(" ", "_")]
             )),
         }
-        drive.update_index(index_entry)
+        # Load existing index, append new entry, then save the full list
+        existing_index = drive.load_index()
+        if not isinstance(existing_index, list):
+            existing_index = []
+        existing_index.append(index_entry)
+        drive.update_index(existing_index)
     except Exception as e:
         # Capture error but don't stop — user can still download
         drive_error = str(e)[:100]
@@ -670,6 +683,25 @@ def show_results(result: dict):
     fname       = result["filename"]
     drive_error = result.get("drive_error")
 
+    # ── Download bar (top priority — recruiter wants file fast) ───────────
+    st.markdown("---")
+    dl_col, status_col = st.columns([3, 1])
+    with dl_col:
+        st.download_button(
+            label=f"⬇️  Download  {fname}",
+            data=out_bytes,
+            file_name=fname,
+            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            use_container_width=True,
+        )
+    with status_col:
+        if drive_error:
+            st.error("☁️ Drive save failed — use download", icon="⚠️")
+        else:
+            st.success("☁️ Saved to Drive", icon="✅")
+
+    st.markdown("---")
+
     # ── JD summary card ───────────────────────────────────────────────────
     st.markdown(f"""
     <div class="cv-card">
@@ -683,15 +715,15 @@ def show_results(result: dict):
             </div>
             <div>
                 <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">PLATFORM</div>
-                <div style="font-weight:600;">{jd['cloud_platform']}</div>
+                <div style="font-weight:600; color:#1E293B;">{jd['cloud_platform']}</div>
             </div>
             <div>
                 <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">SENIORITY</div>
-                <div style="font-weight:600;">{jd['seniority']}</div>
+                <div style="font-weight:600; color:#1E293B;">{jd['seniority']}</div>
             </div>
             <div>
                 <div style="font-size:0.72rem; color:#888; margin-bottom:2px;">EXPERIENCE</div>
-                <div style="font-weight:600;">{jd.get('years_experience','—')}</div>
+                <div style="font-weight:600; color:#1E293B;">{jd.get('years_experience','—')}</div>
             </div>
         </div>
         <div style="margin-top:14px;">
@@ -701,93 +733,74 @@ def show_results(result: dict):
     """, unsafe_allow_html=True)
 
     # ── CV scores ─────────────────────────────────────────────────────────
-    st.markdown('<div class="cv-card"><h3>🎯  CV Match Scores</h3>', unsafe_allow_html=True)
-    cols = st.columns(min(len(scored), 4))
+    score_html = '<div class="cv-card"><h3>🎯  CV Match Scores</h3><div style="display:flex; gap:12px; flex-wrap:wrap;">'
     for i, row in enumerate(scored[:4]):
         sc  = row["score"]
         cls = score_colour(sc)
-        with cols[i]:
-            star = "⭐ " if i == 0 else ""
-            st.markdown(f"""
-            <div style="background:{'#EBF5FB' if i==0 else '#F7F9FC'};
-                        border-radius:10px; padding:14px; text-align:center;
-                        border:{'2px solid #2E86C1' if i==0 else '1px solid #E8EDF5'};">
-                <div style="font-size:0.72rem; color:#888; margin-bottom:4px;">
-                    {star}{'BEST MATCH' if i==0 else f'#{i+1}'}
-                </div>
-                <div style="font-weight:700; font-size:0.82rem; color:#1B4F72;
-                            word-break:break-all; margin-bottom:8px;">
-                    {Path(row['filename']).stem[:28]}
-                </div>
-                <span class="{cls}">{sc}/100</span>
-                <div style="font-size:0.7rem; color:#666; margin-top:8px;">
-                    {', '.join(row.get('key_matches',[])[:3])}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+        stem = Path(row['filename']).stem[:28]
+        matches = ', '.join(row.get('key_matches',[])[:3])
+        bg  = '#EBF5FB' if i == 0 else '#F7F9FC'
+        bdr = '2px solid #2E86C1' if i == 0 else '1px solid #E8EDF5'
+        lbl = '⭐ BEST MATCH' if i == 0 else f'#{i+1}'
+        score_html += f"""
+        <div style="background:{bg}; border-radius:10px; padding:14px; text-align:center;
+                    border:{bdr}; flex:1; min-width:140px;">
+            <div style="font-size:0.72rem; color:#888; margin-bottom:4px;">{lbl}</div>
+            <div style="font-weight:700; font-size:0.82rem; color:#1B4F72;
+                        word-break:break-all; margin-bottom:8px;">{stem}</div>
+            <span class="{cls}">{sc}/100</span>
+            <div style="font-size:0.7rem; color:#666; margin-top:8px;">{matches}</div>
+        </div>"""
+    score_html += '</div></div>'
+    st.markdown(score_html, unsafe_allow_html=True)
 
-    # ── Enhancement summary ───────────────────────────────────────────────
-    st.markdown('<div class="cv-card"><h3>✨  What Was Enhanced</h3>',
-                unsafe_allow_html=True)
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown("**Role Title**")
-        st.markdown(f"> {enh.get('role_title','—')}")
-        st.markdown("**Summary** *(first 180 chars)*")
-        summary = enh.get("summary","")
-        st.markdown(f"> {summary[:180]}{'…' if len(summary)>180 else ''}")
-    with c2:
-        bullets = enh.get("professional_skills_bullets", [])
-        st.markdown(f"**Skills** *({len(bullets)} bullets updated)*")
-        for b in bullets[:5]:
-            st.markdown(f"- {b[:90]}")
-        job_b = enh.get("job_bullets", {})
-        total_b = sum(len(v) for v in job_b.values())
-        st.markdown(f"**Job bullets:** {total_b} points across {len(job_b)} roles")
-    st.markdown('</div>', unsafe_allow_html=True)
+    # ── Enhancement summary (pure HTML — no st.columns inside HTML divs) ─
+    role_title = enh.get('role_title', '—')
+    summary    = enh.get('summary', '')
+    summary_short = summary[:250] + ('…' if len(summary) > 250 else '')
+    bullets    = enh.get('professional_skills_bullets', [])
+    job_b      = enh.get('job_bullets', {})
+    total_b    = sum(len(v) for v in job_b.values())
 
-    # ── Download + Drive status ────────────────────────────────────────────
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        st.download_button(
-            label=f"⬇️  Download  {fname}",
-            data=out_bytes,
-            file_name=fname,
-            mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            use_container_width=True,
-        )
-    with c2:
-        if drive_error:
-            # Show error status but still allow download
-            st.markdown(f"""
-            <div style="background:#FADBD8; border-radius:10px; padding:14px;
-                        text-align:center; height:100%; display:flex;
-                        flex-direction:column; justify-content:center; border:1px solid #F5B7B1;">
-                <div style="font-size:1.2rem;">⚠️</div>
-                <div style="font-size:0.75rem; font-weight:700; color:#A93226; margin-bottom:4px;">
-                    Drive Save Failed
-                </div>
-                <div style="font-size:0.65rem; color:#922B21; margin-top:2px;">
-                    Use the download button →
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            # Show success status
-            st.markdown(f"""
-            <div style="background:#D5F5E3; border-radius:10px; padding:14px;
-                        text-align:center; height:100%; display:flex;
-                        flex-direction:column; justify-content:center;">
-                <div style="font-size:1.2rem;">☁️</div>
-                <div style="font-size:0.78rem; font-weight:700; color:#1E8449;">
-                    Saved to Drive
-                </div>
-                <div style="font-size:0.7rem; color:#555; margin-top:2px;">
-                    CV Pilot / aligned_cvs
+    skills_html = ''.join(
+        f'<div style="font-size:0.82rem; color:#1E293B; padding:3px 0;">• {b}</div>'
+        for b in bullets[:6]
+    )
+
+    # Job bullets preview (show first 2 companies)
+    job_preview_html = ''
+    for comp_name, comp_bullets in list(job_b.items())[:2]:
+        job_preview_html += f'<div style="font-size:0.78rem; font-weight:600; color:#1B4F72; margin-top:8px;">{comp_name}</div>'
+        for jb in comp_bullets[:2]:
+            job_preview_html += f'<div style="font-size:0.78rem; color:#475569; padding:2px 0 2px 10px;">• {jb[:120]}{"…" if len(jb)>120 else ""}</div>'
+
+    st.markdown(f"""
+    <div class="cv-card">
+        <h3>✨  What Was Enhanced</h3>
+        <div style="display:flex; gap:28px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:260px;">
+                <div style="font-size:0.72rem; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Role Title</div>
+                <div style="font-weight:700; color:#1B4F72; font-size:1rem; margin-bottom:14px;">{role_title}</div>
+
+                <div style="font-size:0.72rem; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">Professional Summary</div>
+                <div style="font-size:0.85rem; color:#334155; line-height:1.55; background:#F8FAFC; border-radius:8px; padding:12px; border-left:3px solid #3B82F6;">
+                    {summary_short}
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+            <div style="flex:1; min-width:260px;">
+                <div style="font-size:0.72rem; color:#888; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px;">
+                    Skills Updated ({len(bullets)} bullets)
+                </div>
+                {skills_html}
+
+                <div style="font-size:0.72rem; color:#888; text-transform:uppercase; letter-spacing:1px; margin-top:14px; margin-bottom:4px;">
+                    Experience Bullets ({total_b} points across {len(job_b)} roles)
+                </div>
+                {job_preview_html}
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -832,43 +845,61 @@ def main():
 
     # ── Page header ───────────────────────────────────────────────────────
     st.markdown("""
-    <div style="padding:16px 0 28px; border-bottom:1px solid #E2E8F0; margin-bottom:28px;">
+    <div style="padding:16px 0 24px; border-bottom:1px solid #E2E8F0; margin-bottom:24px;">
         <div style="display:flex; align-items:center; gap:12px; margin-bottom:6px;">
             <span style="font-size:1.8rem;">🚀</span>
             <h1 style="color:#0F2044; margin:0; font-size:1.75rem; font-weight:700;
                        letter-spacing:-0.3px;">CV Pilot</h1>
         </div>
-        <p style="color:#64748B; margin:0; font-size:0.92rem; max-width:560px; line-height:1.5;">
-            Paste a job description — Claude picks the best matching CV, enhances it
-            for this role, and saves it to Google Drive automatically.
+        <p style="color:#64748B; margin:0; font-size:0.92rem; max-width:620px; line-height:1.55;">
+            Paste the job description below and hit <strong>Generate</strong>.
+            The AI will find the best-matching CV from your library, tailor it to the role,
+            and give you an ATS-ready file to download — all in under a minute.
         </p>
     </div>
     """, unsafe_allow_html=True)
 
+    # ── How it works (helpful for non-technical recruiters) ───────────────
+    with st.expander("ℹ️  How does this work?", expanded=False):
+        st.markdown("""
+        **3 simple steps:**
+
+        1. **Paste the job description** — copy it from the job posting or client email
+        2. **Click Generate** — the AI reads the JD, scores all your CVs against it, picks the best one, and rewrites it to match the role
+        3. **Download the result** — you get a `.docx` file ready to submit to the client
+
+        The tool checks for ATS keywords, rewrites bullet points to sound natural (not robotic),
+        and keeps all dates, companies, and job titles accurate. Nothing is fabricated.
+        """)
+
     # ── Input card ────────────────────────────────────────────────────────
     with st.container():
-        st.markdown('<div class="step-label">📋 Step 1 — Job Description</div>',
+        st.markdown('<div class="step-label">📋 Step 1 — Paste the Job Description</div>',
                     unsafe_allow_html=True)
 
         jd_text = ""
         jd_tab, file_tab = st.tabs(["📋  Paste JD", "📁  Upload JD File"])
 
         with jd_tab:
-            jd_text = st.text_area(
+            st.text_area(
                 "Job Description",
                 height=260,
                 placeholder="Paste the full job description here…\n\nInclude the role title, requirements, responsibilities, and any skills mentioned.",
                 label_visibility="collapsed",
+                key="jd_input_area",
             )
+            # Read from session state (reliable across Streamlit reruns & tabs)
+            jd_text = st.session_state.get("jd_input_area", "")
 
         with file_tab:
             uploaded = st.file_uploader("Upload a .txt or .pdf JD file",
                                         type=["txt", "pdf"],
                                         label_visibility="collapsed")
-            jd_text_from_file = ""
             if uploaded:
                 if uploaded.type == "text/plain":
                     jd_text_from_file = uploaded.read().decode("utf-8", errors="ignore")
+                    st.session_state["jd_input_area"] = jd_text_from_file
+                    jd_text = jd_text_from_file
                     st.success(f"Loaded {len(jd_text_from_file)} characters from {uploaded.name}")
                 elif uploaded.type == "application/pdf":
                     try:
@@ -877,29 +908,28 @@ def main():
                             jd_text_from_file = "\n".join(
                                 p.extract_text() or "" for p in pdf.pages
                             )
+                        st.session_state["jd_input_area"] = jd_text_from_file
+                        jd_text = jd_text_from_file
                         st.success(f"Extracted text from {uploaded.name}")
                     except ImportError:
                         st.warning("PDF reading needs pdfplumber. Paste the JD as text instead.")
 
-            if jd_text_from_file:
-                jd_text = jd_text_from_file
-
         st.markdown("---")
-        st.markdown('<div class="step-label">⚙️ Step 2 — Optional Details</div>',
+        st.markdown('<div class="step-label">⚙️ Step 2 — Optional (helps with filing)</div>',
                     unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
         with col1:
-            company = st.text_input("Target company name",
+            company = st.text_input("Client / company name",
                                     placeholder="e.g.  Amazon, Microsoft, Google…",
-                                    help="Used in the output filename. Leave blank if not known.")
+                                    help="Added to the filename so you can find it later. Leave blank if unknown.")
         with col2:
             role_hint = st.selectbox(
-                "Role category hint (optional)",
+                "Role category (auto-detected if blank)",
                 options=["— Auto-detect —", "AWS Cloud Engineer", "Cloud Solutions Architect",
                          "DevOps Engineer", "SRE", "AIOps Engineer",
                          "Azure DevOps Engineer", "Cloud Network Engineer", "Platform Engineer"],
-                help="Leave on auto-detect — Claude will identify the role from the JD.",
+                help="The AI detects this from the JD — only override if it gets it wrong.",
             )
 
         st.markdown("---")
@@ -907,9 +937,9 @@ def main():
         # ── Generate button ───────────────────────────────────────────────────
         ready = bool(jd_text and len(jd_text.strip()) > 100)
         if not ready:
-            st.info("👆  Paste a job description above (at least 100 characters) to enable generation.")
+            st.info("👆  Paste a job description above (at least 100 characters) to get started.")
 
-        generate = st.button("⚡  Generate CV",
+        generate = st.button("⚡  Generate Tailored CV",
                              type="primary",
                              disabled=not ready,
                              use_container_width=True)
@@ -917,7 +947,12 @@ def main():
     # ── Run pipeline ──────────────────────────────────────────────────────
     if generate and ready:
         st.markdown("---")
-        st.markdown("### Results")
+        st.markdown("""
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+            <span style="font-size:1.4rem;">📄</span>
+            <h3 style="color:#0F2044; margin:0; font-weight:700;">Your Tailored CV</h3>
+        </div>
+        """, unsafe_allow_html=True)
         try:
             result = run_pipeline(
                 jd_text=jd_text.strip(),
@@ -934,7 +969,12 @@ def main():
     # ── Show last result (persists across reruns) ─────────────────────────
     if "last_result" in st.session_state and not generate:
         st.markdown("---")
-        st.markdown("### Last Generated CV")
+        st.markdown("""
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+            <span style="font-size:1.4rem;">📄</span>
+            <h3 style="color:#0F2044; margin:0; font-weight:700;">Last Generated CV</h3>
+        </div>
+        """, unsafe_allow_html=True)
         show_results(st.session_state["last_result"])
 
     if "last_result" in st.session_state and generate:

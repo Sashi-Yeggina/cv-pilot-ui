@@ -152,16 +152,31 @@ def enhance_cv(client, cv_text: str, jd: dict) -> dict:
     """
     jd_str = json.dumps(jd, indent=2)
 
-    prompt = f"""You are a professional CV writer. Rewrite specific sections of this CV to align with the job description.
+    prompt = f"""You are a seasoned CV writer who writes like a real person — not a robot.
 
-RULES:
+TONE & STYLE RULES (CRITICAL — follow these closely):
+- Write the way a confident professional would describe their own work in a conversation
+- NEVER use stiff, robotic corporate phrases. BANNED phrases include:
+  "Responsible for...", "Involved in...", "Tasked with...", "Utilized...",
+  "Leveraged...", "Spearheaded...", "Synergized...", "Orchestrated end-to-end...",
+  "Drove alignment...", "Facilitated...", "Successfully managed..."
+- Instead, use natural action verbs: Built, Designed, Led, Automated, Cut, Improved,
+  Set up, Rolled out, Migrated, Reduced, Ran, Shipped, Fixed, Streamlined, Configured
+- Write bullets like someone explaining their wins to a colleague:
+  GOOD: "Built a CI/CD pipeline with GitHub Actions that cut deployment time from 2 hours to 15 minutes"
+  BAD:  "Spearheaded the implementation of a robust CI/CD pipeline leveraging GitHub Actions to optimize deployment velocity"
+  GOOD: "Migrated 40+ microservices from on-prem to AWS EKS, hitting zero downtime during the switch"
+  BAD:  "Successfully orchestrated the migration of microservices to cloud-native Kubernetes infrastructure"
+- Keep sentences concise and punchy — one clear achievement per bullet
+- Include specific numbers, metrics, and outcomes wherever possible (%, time saved, scale)
+- Professional summary should sound like a person introducing themselves, not a LinkedIn bio generator
+
+CONTENT RULES:
 - NEVER fabricate experience or skills the candidate doesn't have
 - Reframe existing experience to highlight JD-relevant aspects
-- Mirror JD keywords naturally (ATS optimised) — don't keyword-stuff
-- Use natural, human tone — avoid robotic phrases like "Responsible for..." or "Involved in..."
-- Start bullets with strong action verbs: Led, Built, Designed, Automated, Reduced, Improved...
+- Mirror JD keywords naturally (ATS optimised) — weave them in, don't keyword-stuff
 - Keep all dates, company names, job titles factually accurate
-- Professional summary: 3-4 sentences, confident but not arrogant
+- Professional summary: 3-4 sentences, confident but conversational
 
 JOB DESCRIPTION ANALYSIS:
 {jd_str}
@@ -172,7 +187,7 @@ CANDIDATE'S CURRENT CV:
 Return ONLY valid JSON with this structure:
 {{
   "role_title": "Updated role title matching the JD (e.g. Senior DevOps Engineer)",
-  "summary": "3-4 sentence professional summary tailored to this JD",
+  "summary": "3-4 sentence professional summary tailored to this JD — natural and human",
   "professional_skills_bullets": [
     "Cloud Platforms: AWS (EKS, EC2, RDS, Lambda, S3), Terraform, CloudFormation",
     "CI/CD: Jenkins, GitHub Actions, ArgoCD, GitLab CI",
@@ -185,16 +200,16 @@ Return ONLY valid JSON with this structure:
   }},
   "job_bullets": {{
     "Company Name 1": [
-      "Action-verb led bullet point that mirrors JD keywords naturally...",
-      "Another strong bullet point..."
+      "Built X that achieved Y, cutting Z by N% — natural human tone",
+      "Another punchy bullet with real metrics..."
     ],
     "Company Name 2": [
-      "Bullet point..."
+      "Clear achievement bullet..."
     ]
   }}
 }}
 
-For job_bullets: use the EXACT company names as they appear in the CV. Only include companies where you can genuinely improve the bullets based on the JD. Provide 3-5 bullets per company."""
+For job_bullets: use the EXACT company names as they appear in the CV. Only include companies where you can genuinely improve the bullets based on the JD. Provide 3-5 bullets per company. Every bullet must sound like a person wrote it, not a template."""
 
     response = client.messages.create(
         model="claude-haiku-4-5-20251001",
