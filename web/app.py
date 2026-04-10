@@ -116,8 +116,9 @@ html, body, [class*="css"] {
     background: linear-gradient(135deg, #1565C0, #1E88E5) !important;
     color: #FFFFFF !important; border: none !important;
     border-radius: 10px !important; height: 48px !important;
-    font-size: 0.96rem !important; font-weight: 600 !important;
+    font-size: 0.96rem !important; font-weight: 700 !important;
     letter-spacing: 0.3px !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
     box-shadow: 0 4px 16px rgba(21,101,192,0.45) !important;
     transition: all 0.18s ease !important;
     width: 100% !important;
@@ -172,7 +173,8 @@ html, body, [class*="css"] {
     color: #FFFFFF !important; border: none !important;
     border-radius: 12px !important;
     padding: 14px 36px !important; font-size: 1.05rem !important;
-    font-weight: 600 !important; letter-spacing: 0.2px !important;
+    font-weight: 700 !important; letter-spacing: 0.2px !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
     box-shadow: 0 4px 18px rgba(21,101,192,0.4) !important;
     transition: all 0.18s ease !important;
 }
@@ -207,7 +209,8 @@ html, body, [class*="css"] {
     background: linear-gradient(135deg, #065F46, #059669) !important;
     color: white !important; border: none !important;
     border-radius: 12px !important; padding: 13px 28px !important;
-    font-size: 1rem !important; font-weight: 600 !important;
+    font-size: 1rem !important; font-weight: 700 !important;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4) !important;
     box-shadow: 0 4px 14px rgba(5,150,105,0.35) !important;
     transition: all 0.18s ease !important;
 }
