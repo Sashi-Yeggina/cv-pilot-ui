@@ -613,29 +613,34 @@ def run_pipeline(jd_text: str, company: str) -> dict:
     date   = datetime.now().strftime("%Y%m%d")
     fname  = f"{role}_{cloud}{co}_{date}.docx"
 
-    drive.save_aligned_cv(fname, output_bytes)
+    drive_error = None
+    try:
+        drive.save_aligned_cv(fname, output_bytes)
 
-    # ── 8. Update index ───────────────────────────────────────────────────
-    import uuid
-    index_entry = {
-        "id": str(uuid.uuid4()),
-        "filename": fname,
-        "base_cv": best["filename"],
-        "role_type": jd["role_title"],
-        "role_category": jd["role_category"],
-        "cloud_platform": jd["cloud_platform"],
-        "company": company,
-        "created_date": datetime.now().isoformat(),
-        "jd_keywords": jd["ats_keywords"],
-        "required_skills": jd["required_skills"],
-        "ats_score": best["score"],
-        "reuse_tags": list(set(
-            [jd["cloud_platform"].lower()]
-            + [s.lower() for s in jd["required_skills"][:8]]
-            + [jd["role_category"].lower().replace(" ", "_")]
-        )),
-    }
-    drive.update_index(index_entry)
+        # ── 8. Update index ───────────────────────────────────────────────────
+        import uuid
+        index_entry = {
+            "id": str(uuid.uuid4()),
+            "filename": fname,
+            "base_cv": best["filename"],
+            "role_type": jd["role_title"],
+            "role_category": jd["role_category"],
+            "cloud_platform": jd["cloud_platform"],
+            "company": company,
+            "created_date": datetime.now().isoformat(),
+            "jd_keywords": jd["ats_keywords"],
+            "required_skills": jd["required_skills"],
+            "ats_score": best["score"],
+            "reuse_tags": list(set(
+                [jd["cloud_platform"].lower()]
+                + [s.lower() for s in jd["required_skills"][:8]]
+                + [jd["role_category"].lower().replace(" ", "_")]
+            )),
+        }
+        drive.update_index(index_entry)
+    except Exception as e:
+        # Capture error but don't stop — user can still download
+        drive_error = str(e)[:100]
 
     progress.progress(100, text="✅  Done!")
     time.sleep(0.4)
@@ -648,6 +653,7 @@ def run_pipeline(jd_text: str, company: str) -> dict:
         "enhancements": enhancements,
         "output_bytes": output_bytes,
         "filename": fname,
+        "drive_error": drive_error,
     }
 
 
@@ -662,6 +668,7 @@ def show_results(result: dict):
     enh         = result["enhancements"]
     out_bytes   = result["output_bytes"]
     fname       = result["filename"]
+    drive_error = result.get("drive_error")
 
     # ── JD summary card ───────────────────────────────────────────────────
     st.markdown(f"""
@@ -751,19 +758,36 @@ def show_results(result: dict):
             use_container_width=True,
         )
     with c2:
-        st.markdown(f"""
-        <div style="background:#D5F5E3; border-radius:10px; padding:14px;
-                    text-align:center; height:100%; display:flex;
-                    flex-direction:column; justify-content:center;">
-            <div style="font-size:1.2rem;">☁️</div>
-            <div style="font-size:0.78rem; font-weight:700; color:#1E8449;">
-                Saved to Drive
+        if drive_error:
+            # Show error status but still allow download
+            st.markdown(f"""
+            <div style="background:#FADBD8; border-radius:10px; padding:14px;
+                        text-align:center; height:100%; display:flex;
+                        flex-direction:column; justify-content:center; border:1px solid #F5B7B1;">
+                <div style="font-size:1.2rem;">⚠️</div>
+                <div style="font-size:0.75rem; font-weight:700; color:#A93226; margin-bottom:4px;">
+                    Drive Save Failed
+                </div>
+                <div style="font-size:0.65rem; color:#922B21; margin-top:2px;">
+                    Use the download button →
+                </div>
             </div>
-            <div style="font-size:0.7rem; color:#555; margin-top:2px;">
-                CV Pilot / aligned_cvs
+            """, unsafe_allow_html=True)
+        else:
+            # Show success status
+            st.markdown(f"""
+            <div style="background:#D5F5E3; border-radius:10px; padding:14px;
+                        text-align:center; height:100%; display:flex;
+                        flex-direction:column; justify-content:center;">
+                <div style="font-size:1.2rem;">☁️</div>
+                <div style="font-size:0.78rem; font-weight:700; color:#1E8449;">
+                    Saved to Drive
+                </div>
+                <div style="font-size:0.7rem; color:#555; margin-top:2px;">
+                    CV Pilot / aligned_cvs
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
 
 # ══════════════════════════════════════════════════════════════════════════
