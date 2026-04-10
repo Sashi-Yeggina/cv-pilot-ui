@@ -143,18 +143,6 @@ class DriveClient:
             _, done = downloader.next_chunk()
 
         return buffer.getvalue()
-    
-    def _download_file(self, file_id: str) -> bytes:
-        """Download a file by ID and return its bytes."""
-        request = self._service.files().get_media(fileId=file_id)
-        buffer = io.BytesIO()
-        downloader = MediaIoBaseDownload(buffer, request)
-
-        done = False
-        while not done:
-            _, done = downloader.next_chunk()
-
-        return buffer.getvalue()
 
     def extract_text_from_docx_bytes(self, docx_bytes: bytes) -> str:
         """

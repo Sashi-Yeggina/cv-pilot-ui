@@ -153,15 +153,35 @@ def render_sidebar(cv_library: list):
         # ── Stats ──
         total = len(cv_library)
         roles = list(set(e.get("role_category","—") for e in cv_library))
+
+        # Debug diagnostic messages
+        debug_msg = ""
+        if total == 0 and "_debug_base_cvs_count" in st.session_state:
+            base_count = st.session_state.get("_debug_base_cvs_count", 0)
+            if base_count == 0:
+                debug_msg = "⚠️ No base CVs uploaded yet"
+            else:
+                debug_msg = f"Base CVs: {base_count} | Index: empty"
+        elif total == 0 and "_debug_error" in st.session_state:
+            error_text = st.session_state.get("_debug_error", "Unknown error")[:40]
+            debug_msg = f"⚠️ Error: {error_text}..."
+
+        debug_html = f'<div style="font-size:0.72rem; color:#E67E22; margin-top:6px;">{debug_msg}</div>' if debug_msg else ''
+
         st.markdown(f"""
         <div style="text-align:center; padding:8px 0 12px;">
             <div style="font-size:2rem; font-weight:700; color:#7EB3E8;">{total}</div>
             <div style="font-size:0.78rem; opacity:0.7;">CVs in library</div>
+            {debug_html}
         </div>
         """, unsafe_allow_html=True)
 
         if st.button("🔄  Refresh Library", key="refresh_lib"):
             st.cache_data.clear()
+            # Clear debug session state
+            for key in ["_debug_base_cvs_count", "_debug_error"]:
+                if key in st.session_state:
+                    del st.session_state[key]
             st.rerun()
 
         st.markdown("---")
