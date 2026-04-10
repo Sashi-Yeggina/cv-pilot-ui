@@ -278,6 +278,41 @@ html, body, [class*="css"] {
 hr { border: none; border-top: 1px solid #E2E8F0; margin: 20px 0; }
 
 /* ══════════════════════════════════════════════
+   MAIN CONTENT TEXT — force dark readable colors
+══════════════════════════════════════════════ */
+[data-testid="stAppViewContainer"] h1,
+[data-testid="stAppViewContainer"] h2,
+[data-testid="stAppViewContainer"] h3,
+[data-testid="stAppViewContainer"] h4 {
+    color: #0F2044 !important;
+}
+[data-testid="stAppViewContainer"] p,
+[data-testid="stAppViewContainer"] li,
+[data-testid="stAppViewContainer"] span,
+[data-testid="stAppViewContainer"] div.stMarkdown {
+    color: #1E293B !important;
+}
+[data-testid="stAppViewContainer"] [data-testid="stCaptionContainer"] {
+    color: #475569 !important;
+}
+/* Bold text inside markdown */
+[data-testid="stAppViewContainer"] strong {
+    color: #0F172A !important;
+}
+/* Blockquotes */
+[data-testid="stAppViewContainer"] blockquote {
+    color: #334155 !important;
+    border-left-color: #3B82F6 !important;
+}
+/* Disabled text area (summary preview) */
+[data-testid="stAppViewContainer"] .stTextArea textarea:disabled {
+    color: #1E293B !important;
+    background: #F8FAFC !important;
+    -webkit-text-fill-color: #1E293B !important;
+    opacity: 1 !important;
+}
+
+/* ══════════════════════════════════════════════
    ALERTS / INFO BOXES
 ══════════════════════════════════════════════ */
 [data-testid="stAlert"] {

@@ -55,7 +55,11 @@ class DriveClient:
     # ── Folder Management ─────────────────────────────────────────────────────
 
     def _find_folder(self, name: str, parent_id: Optional[str] = None) -> Optional[str]:
-        """Find a folder by name (optionally within a parent). Returns folder ID or None."""
+        """
+        Find a folder by name (optionally within a parent).
+        Prefers folders NOT owned by the service account (user's shared folder)
+        to avoid hitting the service account's 15GB storage quota.
+        """
         query = f"mimeType='application/vnd.google-apps.folder' and name='{name}' and trashed=false"
         if parent_id:
             query += f" and '{parent_id}' in parents"
@@ -63,11 +67,22 @@ class DriveClient:
         results = self._service.files().list(
             q=query,
             spaces="drive",
-            fields="files(id, name)"
+            fields="files(id, name, ownedByMe)",
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
         ).execute()
 
         files = results.get("files", [])
-        return files[0]["id"] if files else None
+        if not files:
+            return None
+
+        # Prefer folders NOT owned by the service account (= shared by user)
+        # This avoids quota issues: files in user's folder count against
+        # user's quota, not the service account's 15GB limit.
+        shared_folders = [f for f in files if not f.get("ownedByMe", True)]
+        if shared_folders:
+            return shared_folders[0]["id"]
+        return files[0]["id"]
 
     def _create_folder(self, name: str, parent_id: Optional[str] = None) -> str:
         """Create a folder and return its ID."""
@@ -79,7 +94,9 @@ class DriveClient:
             meta["parents"] = [parent_id]
 
         folder = self._service.files().create(
-            body=meta, fields="id"
+            body=meta,
+            fields="id",
+            supportsAllDrives=True,
         ).execute()
         return folder["id"]
 
@@ -127,7 +144,9 @@ class DriveClient:
             q=query,
             spaces="drive",
             fields="files(id, name, size, modifiedTime)",
-            orderBy="name"
+            orderBy="name",
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
         ).execute()
 
         return results.get("files", [])
@@ -188,7 +207,8 @@ class DriveClient:
             file = self._service.files().update(
                 fileId=existing_file_id,
                 media_body=media,
-                fields="id"
+                fields="id",
+                supportsAllDrives=True,
             ).execute()
         else:
             # Create new file
@@ -196,7 +216,8 @@ class DriveClient:
             file = self._service.files().create(
                 body=meta,
                 media_body=media,
-                fields="id"
+                fields="id",
+                supportsAllDrives=True,
             ).execute()
 
         return file["id"]
@@ -207,7 +228,9 @@ class DriveClient:
         results = self._service.files().list(
             q=query,
             spaces="drive",
-            fields="files(id)"
+            fields="files(id)",
+            supportsAllDrives=True,
+            includeItemsFromAllDrives=True,
         ).execute()
         files = results.get("files", [])
         return files[0]["id"] if files else None
