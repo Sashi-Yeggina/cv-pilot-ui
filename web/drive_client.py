@@ -143,6 +143,42 @@ class DriveClient:
             _, done = downloader.next_chunk()
 
         return buffer.getvalue()
+    
+    def _download_file(self, file_id: str) -> bytes:
+        """Download a file by ID and return its bytes."""
+        request = self._service.files().get_media(fileId=file_id)
+        buffer = io.BytesIO()
+        downloader = MediaIoBaseDownload(buffer, request)
+
+        done = False
+        while not done:
+            _, done = downloader.next_chunk()
+
+        return buffer.getvalue()
+
+    def extract_text_from_docx_bytes(self, docx_bytes: bytes) -> str:
+        """
+        Extract plain text from DOCX bytes.
+        Used to read CV content for scoring.
+        """
+        from docx import Document
+        import io
+
+        doc = Document(io.BytesIO(docx_bytes))
+        return "\n".join(para.text for para in doc.paragraphs)
+
+    def read_cv_text(self, file_id: str) -> str:
+        """
+        Download a CV file and extract its text content.
+
+        Args:
+            file_id: Google Drive file ID of the DOCX CV
+
+        Returns:
+            Plain text content of the CV
+        """
+        docx_bytes = self._download_file(file_id)
+        return self.extract_text_from_docx_bytes(docx_bytes)
 
     def _upload_file(
         self,

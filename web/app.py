@@ -432,14 +432,25 @@ def show_results(result: dict):
 
 @st.cache_data(ttl=300, show_spinner=False)
 def load_library() -> list:
+    """Load the CV index from Drive with diagnostic logging."""
     try:
         from drive_client import DriveClient
         drive = DriveClient(
             credentials_json=get_secret("GOOGLE_CREDENTIALS_JSON"),
             folder_name=get_secret("DRIVE_FOLDER_NAME", "CV Pilot"),
         )
-        return drive.load_index()
-    except Exception:
+        index = drive.load_index()
+
+        # DEBUG: Check base CVs folder for diagnostics
+        try:
+            base_cvs = drive.list_base_cvs()
+            st.session_state["_debug_base_cvs_count"] = len(base_cvs)
+        except Exception as e:
+            st.session_state["_debug_error"] = f"Base CV check error: {str(e)[:60]}"
+
+        return index
+    except Exception as e:
+        st.session_state["_debug_error"] = f"Library load error: {str(e)[:60]}"
         return []
 
 
